@@ -73,6 +73,7 @@ export const signup = async (req, res) => {
       message: "User successfully created",
     });
   } catch (error) {
+    console.log("Error in signup controller", error.message);
     res.status(500).json({ message: error.message });
   }
 };
@@ -114,6 +115,7 @@ export const logout = async (req, res) => {
     res.clearCookie("refreshToken");
     res.json({ message: "Logged out successfully" });
   } catch (error) {
+    console.log("Error in logout controller", error.message);
     res
       .status(500)
       .json({ message: "Internal Server Error", error: error.message });
