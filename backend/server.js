@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
+import cors from "cors";
 import authRoutes from "./routes/auth.route.js";
 import productRoutes from "./routes/product.route.js";
 import cartRoutes from "./routes/cart.route.js";
@@ -10,8 +11,8 @@ import analyticsRoutes from "./routes/analytics.route.js";
 import { connectDB } from "./db/config.js";
 dotenv.config();
 const app = express();
-
 app.use(express.json()); //allows you to parse the body of the req
+app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
 app.use(cookieParser());
 
 app.use("/api/auth", authRoutes);
