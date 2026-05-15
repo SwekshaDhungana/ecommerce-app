@@ -11,7 +11,7 @@ import analyticsRoutes from "./routes/analytics.route.js";
 import { connectDB } from "./db/config.js";
 dotenv.config();
 const app = express();
-app.use(express.json()); //allows you to parse the body of the req
+app.use(express.json({ limit: "10mb" })); //allows you to parse the body of the req
 app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
 app.use(cookieParser());
 
