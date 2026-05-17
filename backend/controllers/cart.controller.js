@@ -25,6 +25,7 @@ export const addToCart = async (req, res) => {
     const { productId } = req.body;
     const user = req.user; //will come as MongoDB document
     //one thing to understand is if you change the existingItem then it is reflected in the user
+
     const existingItem = user.cartItems.find((item) => item.id === productId);
     if (existingItem) {
       existingItem.quantity += 1;
