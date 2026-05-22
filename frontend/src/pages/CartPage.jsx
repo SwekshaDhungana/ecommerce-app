@@ -1,10 +1,12 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { useCartStore } from "../stores/useCartStore";
+import { useCartStore } from "../stores/useCartStore.js";
 import CartItem from "../components/CartItem";
 import PeopleAlsoBought from "../components/PeopleAlsoBought";
 import { ShoppingCart } from "lucide-react";
 import { Link } from "react-router-dom";
+import OrderSummary from "../components/OrderSummary.jsx";
+import GiftCouponCard from "../components/GiftCouponCard.jsx";
 
 const CartPage = () => {
   const { cart } = useCartStore();
@@ -30,7 +32,7 @@ const CartPage = () => {
             {cart.length > 0 && <PeopleAlsoBought />}
           </motion.div>
 
-          {/* {cart.length > 0 && (
+          {cart.length > 0 && (
             <motion.div
               className="mx-auto mt-6 max-w-4xl flex-1 space-y-6 lg:mt-0 lg:w-full"
               initial={{ opacity: 0, x: 20 }}
@@ -40,7 +42,7 @@ const CartPage = () => {
               <OrderSummary />
               <GiftCouponCard />
             </motion.div>
-          )} */}
+          )}
         </div>
       </div>
     </div>

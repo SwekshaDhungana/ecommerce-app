@@ -10,7 +10,7 @@ import LoadingSpinner from "./components/LoadingSpinner";
 import AdminPage from "./pages/AdminPage";
 import CategoryPage from "./pages/CategoryPage";
 import CartPage from "./pages/CartPage";
-import { useCartStore } from "./stores/useCartStore";
+import { useCartStore } from "./stores/useCartStore.js";
 
 const App = () => {
   const { user, checkAuth, checkingAUth } = useUserStore();
@@ -21,8 +21,9 @@ const App = () => {
   }, [checkAuth]);
 
   useEffect(() => {
+    if (!user) return;
     getCartItems();
-  }, [getCartItems]);
+  }, [getCartItems, user]);
 
   if (checkingAUth) return <LoadingSpinner />;
 
