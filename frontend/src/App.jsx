@@ -11,9 +11,11 @@ import AdminPage from "./pages/AdminPage";
 import CategoryPage from "./pages/CategoryPage";
 import CartPage from "./pages/CartPage";
 import { useCartStore } from "./stores/useCartStore.js";
+import PurchaseSuccessPage from "./pages/PurchaseSuccessPage.jsx";
+import PurchaseCancelPage from "./components/PurchaseCancelPage.jsx";
 
 const App = () => {
-  const { user, checkAuth, checkingAUth } = useUserStore();
+  const { user, checkAuth, checkingAuth } = useUserStore();
   const { getCartItems } = useCartStore();
 
   useEffect(() => {
@@ -25,7 +27,7 @@ const App = () => {
     getCartItems();
   }, [getCartItems, user]);
 
-  if (checkingAUth) return <LoadingSpinner />;
+  if (checkingAuth) return <LoadingSpinner />;
 
   return (
     <div className="min-h-screen bg-gray-900 text-white relative overflow-hidden">
@@ -57,6 +59,14 @@ const App = () => {
           <Route
             path="/cart"
             element={user ? <CartPage /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/purchase-success"
+            element={user ? <PurchaseSuccessPage /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/purchase-cancel"
+            element={user ? <PurchaseCancelPage /> : <Navigate to="/login" />}
           />
         </Routes>
       </div>
