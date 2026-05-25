@@ -55,3 +55,41 @@ export const useUserStore = create((set, get) => ({
     }
   },
 }));
+
+// Axios interceptor for token refresh
+let refreshPromise = null;
+
+axiosInstance.interceptors.response.use(
+  (response) => response,
+
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        // wait if refresh already happening
+        if (refreshPromise) {
+          await refreshPromise;
+          return axiosInstance(originalRequest);
+        }
+
+        // start refresh
+        refreshPromise = useUserStore.getState().refreshToken();
+
+        await refreshPromise;
+
+        return axiosInstance(originalRequest);
+      } catch (refreshError) {
+        useUserStore.getState().logout();
+
+        return Promise.reject(refreshError);
+      } finally {
+        refreshPromise = null;
+      }
+    }
+
+    return Promise.reject(error);
+  },
+);
