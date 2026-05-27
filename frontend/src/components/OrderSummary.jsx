@@ -1,48 +1,29 @@
-import React from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { MoveRight } from "lucide-react";
 import { useCartStore } from "../stores/useCartStore";
-// import { loadStripe } from "@stripe/stripe-js";
 import axiosInstance from "../lib/axios";
-
-// const stripePromise = loadStripe(
-//   "pk_test_51TWFyAD3Z4JFl2upzcpzVy4gyOetCAn0hYiHiWIxeuxKuWiHdMF0lImyn7N99oIAtCPlzuDm7X5vfAyAsLNo18oX00YaCyRW1J",
-// );
 
 const OrderSummary = () => {
   const { total, subtotal, coupon, isCouponApplied, cart } = useCartStore();
 
   const savings = subtotal - total;
-  //   const savings = 200;
   const formattedSubtotal = subtotal.toFixed(2);
   const formattedTotal = total.toFixed(2);
   const formattedSavings = savings.toFixed(2);
 
-  // const handlePayment = async () => {
-  //   const stripe = await stripePromise;
-  //   const res = await axiosInstance.post("/payments/create-checkout-session", {
-  //     products: cart,
-  //     couponCode: coupon ? coupon.code : null,
-  //   });
-  //   const session = res.data;
-  //   console.log("Session is here", session);
-  //   const result = await stripe.redirectToCheckout({
-  //     sessionId: session.id,
-  //   });
-  //   if (result.error) {
-  //     console.error("Error", result.error);
-  //   }
-  // };
-
   const handlePayment = async () => {
+    const checkoutProducts = cart.map((item) => ({
+      _id: item._id,
+      quantity: item.quantity,
+    }));
+
     const res = await axiosInstance.post("/payments/create-checkout-session", {
-      products: cart,
+      products: checkoutProducts,
       couponCode: coupon ? coupon.code : null,
     });
 
     const session = res.data;
-    console.log("Session is here", session);
 
     if (!session.url) {
       console.error("Stripe checkout URL is missing from backend response.");
@@ -91,6 +72,7 @@ const OrderSummary = () => {
               </dd>
             </dl>
           )}
+
           <dl className="flex items-center justify-between gap-4 border-t border-gray-600 pt-2">
             <dt className="text-base font-bold text-white">Total</dt>
             <dd className="text-base font-bold text-emerald-400">

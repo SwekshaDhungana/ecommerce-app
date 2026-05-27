@@ -6,17 +6,42 @@ export const useProductStore = create((set) => ({
   products: [],
   loading: false,
   setProducts: (products) => set({ products }),
+  // createProduct: async (productData) => {
+  //   set({ loading: true });
+  //   try {
+  //     const res = await axiosInstance.post("/products", productData);
+  //     set((prevState) => ({
+  //       products: [...prevState.products, res.data],
+  //       loading: false,
+  //     }));
+  //   } catch (error) {
+  //     toast.error(error.response.data.error);
+  //     set({ loading: false });
+  //   }
+  // },
+
   createProduct: async (productData) => {
     set({ loading: true });
+
     try {
-      const res = axiosInstance.post("/products", productData);
+      const res = await axiosInstance.post("/products", productData);
+
       set((prevState) => ({
         products: [...prevState.products, res.data],
         loading: false,
       }));
+
+      toast.success("Product created successfully");
+      return res.data;
     } catch (error) {
-      toast.error(error.response.data.error);
+      const apiError = error.response?.data;
+      const validationMessage = apiError?.errors?.[0]?.message;
+      const fallbackMessage = apiError?.message || "Failed to create product";
+
       set({ loading: false });
+      toast.error(validationMessage || fallbackMessage);
+
+      throw error;
     }
   },
   fetchAllProducts: async () => {
@@ -47,14 +72,13 @@ export const useProductStore = create((set) => ({
   deleteProduct: async (productId) => {
     set({ loading: true });
     try {
-      const res = await axiosInstance.delete(`products/${productId}`);
+      await axiosInstance.delete(`products/${productId}`);
       set((state) => ({
         products: state.products.filter((product) => product._id !== productId),
         loading: false,
       }));
     } catch (error) {
       set({ loading: false });
-
       toast.error(error.response?.data?.error || "Failed to delete product");
     }
   },
