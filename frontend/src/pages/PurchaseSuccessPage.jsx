@@ -5,39 +5,59 @@ import { useCartStore } from "../stores/useCartStore";
 import axiosInstance from "../lib/axios";
 import Confetti from "react-confetti";
 
+const getSessionIdFromUrl = () => {
+  return new URLSearchParams(window.location.search).get("session_id");
+};
+
 const PurchaseSuccessPage = () => {
-  const [isProcessing, setIsProcessing] = useState(true);
   const { clearCart } = useCartStore();
-  const [error, setError] = useState(null);
+  const [status, setStatus] = useState(() => {
+    const sessionId = getSessionIdFromUrl();
+
+    if (!sessionId) {
+      return {
+        isProcessing: false,
+        error: "No session ID found in the URL",
+      };
+    }
+
+    return {
+      isProcessing: true,
+      error: null,
+    };
+  });
 
   useEffect(() => {
-    const handleCheckoutSuccess = async (sessionId) => {
+    const sessionId = getSessionIdFromUrl();
+
+    if (!sessionId) {
+      return;
+    }
+
+    const handleCheckoutSuccess = async () => {
       try {
         await axiosInstance.post("/payments/checkout-success", {
           sessionId,
         });
         clearCart();
-      } catch (error) {
-        console.log(error);
-      } finally {
-        setIsProcessing(false);
+        setStatus({
+          isProcessing: false,
+          error: null,
+        });
+      } catch {
+        setStatus({
+          isProcessing: false,
+          error: "Failed to confirm your payment session",
+        });
       }
     };
 
-    const sessionId = new URLSearchParams(window.location.search).get(
-      "session_id",
-    );
-    if (sessionId) {
-      handleCheckoutSuccess(sessionId);
-    } else {
-      setIsProcessing(false);
-      setError("No session ID found in the URL");
-    }
+    handleCheckoutSuccess();
   }, [clearCart]);
 
-  if (isProcessing) return "Processing...";
+  if (status.isProcessing) return "Processing...";
 
-  if (error) return `Error: ${error}`;
+  if (status.error) return `Error: ${status.error}`;
 
   return (
     <div className="h-screen flex items-center justify-center px-4">
@@ -55,6 +75,7 @@ const PurchaseSuccessPage = () => {
           <div className="flex justify-center">
             <CheckCircle className="text-emerald-400 w-16 h-16 mb-4" />
           </div>
+
           <h1 className="text-2xl sm:text-3xl font-bold text-center text-emerald-400 mb-2">
             Purchase Successful!
           </h1>
@@ -62,9 +83,11 @@ const PurchaseSuccessPage = () => {
           <p className="text-gray-300 text-center mb-2">
             Thank you for your order. {"We're"} processing it now.
           </p>
+
           <p className="text-emerald-400 text-center text-sm mb-6">
             Check your email for order details and updates.
           </p>
+
           <div className="bg-gray-700 rounded-lg p-4 mb-6">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-gray-400">Order number</span>
@@ -72,6 +95,7 @@ const PurchaseSuccessPage = () => {
                 #12345
               </span>
             </div>
+
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-400">Estimated delivery</span>
               <span className="text-sm font-semibold text-emerald-400">
@@ -81,17 +105,14 @@ const PurchaseSuccessPage = () => {
           </div>
 
           <div className="space-y-4">
-            <button
-              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4
-             rounded-lg transition duration-300 flex items-center justify-center"
-            >
+            <button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 flex items-center justify-center">
               <HandHeart className="mr-2" size={18} />
               Thanks for trusting us!
             </button>
+
             <Link
-              to={"/"}
-              className="w-full bg-gray-700 hover:bg-gray-600 text-emerald-400 font-bold py-2 px-4 
-            rounded-lg transition duration-300 flex items-center justify-center"
+              to="/"
+              className="w-full bg-gray-700 hover:bg-gray-600 text-emerald-400 font-bold py-2 px-4 rounded-lg transition duration-300 flex items-center justify-center"
             >
               Continue Shopping
               <ArrowRight className="ml-2" size={18} />
@@ -102,4 +123,5 @@ const PurchaseSuccessPage = () => {
     </div>
   );
 };
+
 export default PurchaseSuccessPage;

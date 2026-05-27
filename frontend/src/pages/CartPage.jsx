@@ -1,4 +1,3 @@
-import React from "react";
 import { motion } from "framer-motion";
 import { useCartStore } from "../stores/useCartStore.js";
 import CartItem from "../components/CartItem";
@@ -10,6 +9,7 @@ import GiftCouponCard from "../components/GiftCouponCard.jsx";
 
 const CartPage = () => {
   const { cart } = useCartStore();
+
   return (
     <div className="py-8 md:py-16">
       <div className="mx-auto max-w-screen-xl px-4 2xl:px-0">
@@ -29,6 +29,7 @@ const CartPage = () => {
                 ))}
               </div>
             )}
+
             {cart.length > 0 && <PeopleAlsoBought />}
           </motion.div>
 
@@ -59,7 +60,7 @@ const EmptyCartUI = () => (
     transition={{ duration: 0.5 }}
   >
     <ShoppingCart className="h-24 w-24 text-gray-300" />
-    <h3 className="text-2xl font-semibold ">Your cart is empty</h3>
+    <h3 className="text-2xl font-semibold">Your cart is empty</h3>
     <p className="text-gray-400">
       Looks like you {"haven't"} added anything to your cart yet.
     </p>
