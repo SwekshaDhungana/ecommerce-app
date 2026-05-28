@@ -33,7 +33,7 @@ app.use("/api/coupons", couponRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/analytics", analyticsRoutes);
 
-app.use(notFoundHandler);
-app.use(errorHandler);
+app.use(notFoundHandler); //middleware executes inorder, so when it finds the route which does not match any of the above, this runs
+app.use(errorHandler); //this is special middleware which has four parameters so the error gets passed to this
 
 export default app;

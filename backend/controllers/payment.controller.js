@@ -275,7 +275,39 @@ export const checkoutSuccess = async (req, res) => {
     const { sessionId } = req.validatedBody;
     const session = await stripe.checkout.sessions.retrieve(sessionId);
 
-    if (session.payment_status === "paid") {
+    if (session.payment_status !== "paid") {
+      return res
+        .status(400)
+        .json({ message: "Payment has not been completed" });
+    }
+
+    const products = JSON.parse(session.metadata.products);
+
+    const orderPayload = {
+      user: session.metadata.userId,
+      products: products.map((product) => ({
+        product: product.id,
+        quantity: product.quantity,
+        price: product.price,
+      })),
+      totalAmount: session.amount_total / 100,
+      stripeSessionId: sessionId,
+    };
+
+    const upsertResult = await Order.updateOne(
+      { stripeSessionId: sessionId },
+      { $setOnInsert: orderPayload }, //means the order is only inserted the first time. Later repeated calls do not overwrite it.
+      {
+        upsert: true, //makes MongoDB do the “create if missing” step atomically.
+        runValidators: true,
+      },
+    );
+
+    const order = await Order.findOne({ stripeSessionId: sessionId });
+
+    const wasCreatedNow = upsertResult.upsertedCount === 1;
+
+    if (wasCreatedNow) {
       if (session.metadata.couponCode) {
         await Coupon.findOneAndUpdate(
           {
@@ -288,32 +320,18 @@ export const checkoutSuccess = async (req, res) => {
         );
       }
 
-      const products = JSON.parse(session.metadata.products);
-      const newOrder = new Order({
-        user: session.metadata.userId,
-        products: products.map((product) => ({
-          product: product.id,
-          quantity: product.quantity,
-          price: product.price,
-        })),
-        totalAmount: session.amount_total / 100,
-        stripeSessionId: sessionId,
-      });
-
-      await newOrder.save();
       await User.findByIdAndUpdate(session.metadata.userId, {
         cartItems: [],
       });
-
-      return res.status(200).json({
-        success: true,
-        message:
-          "Payment successful, order created, and coupon deactivated if used.",
-        orderId: newOrder._id,
-      });
     }
 
-    return res.status(400).json({ message: "Payment has not been completed" });
+    return res.status(200).json({
+      success: true,
+      message: wasCreatedNow
+        ? "Payment successful and order created."
+        : "Order already processed for this payment session.",
+      orderId: order._id,
+    });
   } catch (error) {
     console.error("Error processing successful checkout:", error);
     res.status(500).json({
@@ -322,6 +340,59 @@ export const checkoutSuccess = async (req, res) => {
     });
   }
 };
+
+// export const checkoutSuccess = async (req, res) => {
+//   try {
+//     const { sessionId } = req.validatedBody;
+//     const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+//     if (session.payment_status === "paid") {
+//       if (session.metadata.couponCode) {
+//         await Coupon.findOneAndUpdate(
+//           {
+//             code: session.metadata.couponCode,
+//             userId: session.metadata.userId,
+//           },
+//           {
+//             isActive: false,
+//           },
+//         );
+//       }
+
+//       const products = JSON.parse(session.metadata.products);
+//       const newOrder = new Order({
+//         user: session.metadata.userId,
+//         products: products.map((product) => ({
+//           product: product.id,
+//           quantity: product.quantity,
+//           price: product.price,
+//         })),
+//         totalAmount: session.amount_total / 100,
+//         stripeSessionId: sessionId,
+//       });
+
+//       await newOrder.save();
+//       await User.findByIdAndUpdate(session.metadata.userId, {
+//         cartItems: [],
+//       });
+
+//       return res.status(200).json({
+//         success: true,
+//         message:
+//           "Payment successful, order created, and coupon deactivated if used.",
+//         orderId: newOrder._id,
+//       });
+//     }
+
+//     return res.status(400).json({ message: "Payment has not been completed" });
+//   } catch (error) {
+//     console.error("Error processing successful checkout:", error);
+//     res.status(500).json({
+//       message: "Error processing successful checkout",
+//       error: error.message,
+//     });
+//   }
+// };
 
 async function createStripeCoupon(discountPercentage) {
   const coupon = await stripe.coupons.create({

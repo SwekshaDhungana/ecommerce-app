@@ -1,5 +1,5 @@
 import { ArrowRight, CheckCircle, HandHeart } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useCartStore } from "../stores/useCartStore";
 import axiosInstance from "../lib/axios";
@@ -11,6 +11,7 @@ const getSessionIdFromUrl = () => {
 
 const PurchaseSuccessPage = () => {
   const { clearCart } = useCartStore();
+  const hasProcessedRef = useRef(false);
   const [status, setStatus] = useState(() => {
     const sessionId = getSessionIdFromUrl();
 
@@ -30,16 +31,20 @@ const PurchaseSuccessPage = () => {
   useEffect(() => {
     const sessionId = getSessionIdFromUrl();
 
-    if (!sessionId) {
+    if (!sessionId || hasProcessedRef.current) {
       return;
     }
+
+    hasProcessedRef.current = true;
 
     const handleCheckoutSuccess = async () => {
       try {
         await axiosInstance.post("/payments/checkout-success", {
           sessionId,
         });
+
         clearCart();
+
         setStatus({
           isProcessing: false,
           error: null,
@@ -125,3 +130,15 @@ const PurchaseSuccessPage = () => {
 };
 
 export default PurchaseSuccessPage;
+
+// First effect run
+// sessionId exists
+// hasProcessedRef.current is false
+// condition passes
+// set it to true
+// call backend once
+// Second effect run
+// sessionId still exists
+// but now hasProcessedRef.current is true
+// effect exits early
+// no second API call
