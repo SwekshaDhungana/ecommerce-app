@@ -166,6 +166,15 @@ export const validateUpdateCartQuantity = (req, res, next) => {
   next();
 };
 
+const validateCouponSchema = z.object({
+  code: z
+    .string()
+    .trim()
+    .min(1, "Coupon code is required")
+    .max(50, "Coupon code is too long")
+    .transform((value) => value.toUpperCase()),
+});
+
 export const validateSignup = validateBody(signupSchema);
 export const validateLogin = validateBody(loginSchema);
 export const validateCreateCheckoutSession = validateBody(
@@ -175,3 +184,4 @@ export const validateCheckoutSuccess = validateBody(checkoutSuccessSchema);
 export const validateCreateProduct = validateBody(createProductSchema);
 export const validateAddToCart = validateBody(addToCartSchema);
 export const validateRemoveFromCart = validateBody(removeFromCartSchema);
+export const validateCouponCode = validateBody(validateCouponSchema);
