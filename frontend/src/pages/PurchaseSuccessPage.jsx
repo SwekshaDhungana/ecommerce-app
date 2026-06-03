@@ -11,7 +11,7 @@ const getSessionIdFromUrl = () => {
 
 const PurchaseSuccessPage = () => {
   const { clearCart } = useCartStore();
-  const hasProcessedRef = useRef(false);
+  const hasProcessedRef = useRef(false); //did i already do this marker, it does not rerender the component
   const [status, setStatus] = useState(() => {
     const sessionId = getSessionIdFromUrl();
 
