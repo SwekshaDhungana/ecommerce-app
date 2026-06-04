@@ -12,6 +12,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import LoadingSpinner from "./LoadingSpinner";
 
 const AnalyticsTab = () => {
   const [analyticsData, setAnalyticsData] = useState({
@@ -22,7 +23,8 @@ const AnalyticsTab = () => {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [dailySalesData, setDailySalesData] = useState([]);
-  console.log("dailySalesData", dailySalesData);
+  const [error, setError] = useState(null);
+
   useEffect(() => {
     const fetchAnalyticsData = async () => {
       try {
@@ -30,7 +32,9 @@ const AnalyticsTab = () => {
         setAnalyticsData(response.data.analyticsData);
         setDailySalesData(response.data.dailySalesData);
       } catch (error) {
-        console.error("Error fetching analytics data:", error);
+        setError(
+          error.response?.data?.message || "Error fetching analytics data",
+        );
       } finally {
         setIsLoading(false);
       }
@@ -40,12 +44,20 @@ const AnalyticsTab = () => {
   }, []);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <LoadingSpinner />;
+  }
+
+  if (error) {
+    return (
+      <div className="mx-auto max-w-4xl rounded-lg border border-red-500 bg-red-950/40 p-6 text-center text-red-200">
+        {error}
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <AnalyticsCard
           title="Total Users"
           value={analyticsData.users.toLocaleString()}
@@ -71,8 +83,9 @@ const AnalyticsTab = () => {
           color="from-emerald-500 to-lime-700"
         />
       </div>
+
       <motion.div
-        className="bg-gray-800/60 rounded-lg p-6 shadow-lg"
+        className="rounded-lg bg-gray-800/60 p-6 shadow-lg"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.25 }}
@@ -80,7 +93,6 @@ const AnalyticsTab = () => {
         <ResponsiveContainer width="100%" height={400}>
           <LineChart data={dailySalesData}>
             <CartesianGrid strokeDasharray="3 3" />
-            {/* <XAxis dataKey="date" stroke="#D1D5DB" /> */}
             <XAxis
               dataKey="date"
               stroke="#D1D5DB"
@@ -92,14 +104,7 @@ const AnalyticsTab = () => {
               }
             />
             <YAxis yAxisId="left" stroke="#D1D5DB" />
-            {/* <YAxis
-              yAxisId="left"
-              stroke="#D1D5DB"
-              domain={[0, 8]}
-              ticks={[0, 2, 4, 6, 8]}
-            /> */}
             <YAxis yAxisId="right" orientation="right" stroke="#D1D5DB" />
-            {/* <Tooltip /> */}
             <Tooltip
               labelFormatter={(value) =>
                 new Date(value).toLocaleDateString("en-US", {
@@ -132,19 +137,20 @@ const AnalyticsTab = () => {
     </div>
   );
 };
+
 export default AnalyticsTab;
 
 const AnalyticsCard = ({ title, value, icon: Icon, color }) => (
   <motion.div
-    className={`bg-gray-800 rounded-lg p-6 shadow-lg overflow-hidden relative ${color}`}
+    className={`relative overflow-hidden rounded-lg bg-gray-800 p-6 shadow-lg ${color}`}
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.5 }}
   >
-    <div className="flex justify-between items-center">
+    <div className="flex items-center justify-between">
       <div className="z-10">
-        <p className="text-emerald-300 text-sm mb-1 font-semibold">{title}</p>
-        <h3 className="text-white text-3xl font-bold">{value}</h3>
+        <p className="mb-1 text-sm font-semibold text-emerald-300">{title}</p>
+        <h3 className="text-3xl font-bold text-white">{value}</h3>
       </div>
     </div>
     <div className="absolute inset-0 bg-gradient-to-br from-emerald-600 to-emerald-900 opacity-30" />

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { PlusCircle, Upload, Loader } from "lucide-react";
 import { useProductStore } from "../stores/useProductStore";
@@ -21,12 +21,13 @@ const CreateProductForm = () => {
     category: "",
     image: "",
   });
+  const fileInputRef = useRef(null);
 
   const { createProduct, loading } = useProductStore();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // console.log(e, "e");
+
     try {
       await createProduct(newProduct);
       setNewProduct({
@@ -36,8 +37,12 @@ const CreateProductForm = () => {
         category: "",
         image: "",
       });
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     } catch {
-      console.log("error creating a product");
+      // Error toast is already handled in the store.
     }
   };
   const handleImageChange = (e) => {
@@ -163,6 +168,7 @@ const CreateProductForm = () => {
 
         <div className="mt-1 flex items-center">
           <input
+            ref={fileInputRef}
             type="file"
             id="image"
             className="sr-only"

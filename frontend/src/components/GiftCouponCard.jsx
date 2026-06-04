@@ -6,13 +6,17 @@ const GiftCouponCard = () => {
   const { coupon, isCouponApplied, applyCoupon, getMyCoupon, removeCoupon } =
     useCartStore();
 
-  const [userInputCode, setUserInputCode] = useState(coupon?.code ?? "");
+  const [userInputCode, setUserInputCode] = useState("");
 
   useEffect(() => {
     getMyCoupon();
   }, [getMyCoupon]);
 
-  const displayedCode = coupon?.code ?? userInputCode;
+  useEffect(() => {
+    if (coupon?.code) {
+      setUserInputCode(coupon.code);
+    }
+  }, [coupon]);
 
   const handleApplyCoupon = () => {
     if (!userInputCode.trim()) return;
@@ -44,7 +48,7 @@ const GiftCouponCard = () => {
             id="voucher"
             className="block w-full rounded-lg border border-gray-600 bg-gray-700 p-2.5 text-sm text-white placeholder-gray-400 focus:border-emerald-500 focus:ring-emerald-500"
             placeholder="Enter code here"
-            value={displayedCode}
+            value={userInputCode}
             onChange={(event) => setUserInputCode(event.target.value)}
             required
           />

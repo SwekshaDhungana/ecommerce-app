@@ -1,11 +1,14 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { MoveRight } from "lucide-react";
 import { useCartStore } from "../stores/useCartStore";
 import axiosInstance from "../lib/axios";
+import toast from "react-hot-toast";
 
 const OrderSummary = () => {
   const { total, subtotal, coupon, isCouponApplied, cart } = useCartStore();
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const savings = subtotal - total;
   const formattedSubtotal = subtotal.toFixed(2);
@@ -13,24 +16,40 @@ const OrderSummary = () => {
   const formattedSavings = savings.toFixed(2);
 
   const handlePayment = async () => {
-    const checkoutProducts = cart.map((item) => ({
-      _id: item._id,
-      quantity: item.quantity,
-    }));
+    if (isProcessing) return;
 
-    const res = await axiosInstance.post("/payments/create-checkout-session", {
-      products: checkoutProducts,
-      couponCode: coupon ? coupon.code : null,
-    });
+    setIsProcessing(true);
 
-    const session = res.data;
+    try {
+      const checkoutProducts = cart.map((item) => ({
+        _id: item._id,
+        quantity: item.quantity,
+      }));
 
-    if (!session.url) {
-      console.error("Stripe checkout URL is missing from backend response.");
-      return;
+      const res = await axiosInstance.post(
+        "/payments/create-checkout-session",
+        {
+          products: checkoutProducts,
+          couponCode: coupon ? coupon.code : null,
+        },
+      );
+
+      const session = res.data;
+
+      if (!session.url) {
+        toast.error("Stripe checkout URL is missing from backend response.");
+        return;
+      }
+
+      window.location.assign(session.url);
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message ||
+          "Failed to start checkout. Please try again.",
+      );
+    } finally {
+      setIsProcessing(false);
     }
-
-    window.location.assign(session.url);
   };
 
   return (
@@ -82,12 +101,13 @@ const OrderSummary = () => {
         </div>
 
         <motion.button
-          className="flex w-full items-center justify-center rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-300"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+          className="flex w-full items-center justify-center rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-300 disabled:cursor-not-allowed disabled:opacity-60"
+          whileHover={{ scale: isProcessing ? 1 : 1.05 }}
+          whileTap={{ scale: isProcessing ? 1 : 0.95 }}
           onClick={handlePayment}
+          disabled={isProcessing}
         >
-          Proceed to Checkout
+          {isProcessing ? "Processing..." : "Proceed to Checkout"}
         </motion.button>
 
         <div className="flex items-center justify-center gap-2">
