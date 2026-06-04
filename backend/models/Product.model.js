@@ -22,14 +22,18 @@ const productSchema = new mongoose.Schema(
     category: {
       type: String,
       required: true,
+      index: true,
     },
     isFeatured: {
       type: Boolean,
       default: false,
+      index: true,
     },
   },
   { timestamps: true },
 );
+
+productSchema.index({ category: 1, isFeatured: 1 });
 
 const Product = mongoose.model("products", productSchema);
 export default Product;

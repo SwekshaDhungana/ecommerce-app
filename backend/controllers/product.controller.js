@@ -230,6 +230,7 @@ export const deleteProduct = asyncHandler(async (req, res) => {
   }
 
   await Product.findByIdAndDelete(req.params.id);
+  await updateFeaturedProductCache();
 
   res.status(200).json({ message: "Product deleted successfully" });
 });
