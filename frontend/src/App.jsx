@@ -1,18 +1,23 @@
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import HomePage from "./pages/HomePage";
-import SignUpPage from "./pages/SignUpPage";
-import LoginPage from "./pages/LoginPage";
 import Navbar from "./components/Navbar";
 import { Toaster } from "react-hot-toast";
 import { useUserStore } from "./stores/useUserStore";
 import LoadingSpinner from "./components/LoadingSpinner";
-import AdminPage from "./pages/AdminPage";
-import CategoryPage from "./pages/CategoryPage";
-import CartPage from "./pages/CartPage";
 import { useCartStore } from "./stores/useCartStore.js";
-import PurchaseSuccessPage from "./pages/PurchaseSuccessPage.jsx";
-import PurchaseCancelPage from "./components/PurchaseCancelPage.jsx";
+
+const HomePage = lazy(() => import("./pages/HomePage"));
+const SignUpPage = lazy(() => import("./pages/SignUpPage"));
+const LoginPage = lazy(() => import("./pages/LoginPage"));
+const AdminPage = lazy(() => import("./pages/AdminPage"));
+const CategoryPage = lazy(() => import("./pages/CategoryPage"));
+const CartPage = lazy(() => import("./pages/CartPage"));
+const PurchaseSuccessPage = lazy(
+  () => import("./pages/PurchaseSuccessPage.jsx"),
+);
+const PurchaseCancelPage = lazy(
+  () => import("./components/PurchaseCancelPage.jsx"),
+);
 
 const App = () => {
   const { user, checkAuth, checkingAuth } = useUserStore();
@@ -39,36 +44,44 @@ const App = () => {
 
       <div className="relative z-50 pt-20">
         <Navbar />
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route
-            path="/signup"
-            element={!user ? <SignUpPage /> : <Navigate to="/" />}
-          />
-          <Route
-            path="/login"
-            element={!user ? <LoginPage /> : <Navigate to="/" />}
-          />
-          <Route
-            path="/secret-dashboard"
-            element={
-              user?.role === "admin" ? <AdminPage /> : <Navigate to="/login" />
-            }
-          />
-          <Route path="/category/:category" element={<CategoryPage />} />
-          <Route
-            path="/cart"
-            element={user ? <CartPage /> : <Navigate to="/login" />}
-          />
-          <Route
-            path="/purchase-success"
-            element={user ? <PurchaseSuccessPage /> : <Navigate to="/login" />}
-          />
-          <Route
-            path="/purchase-cancel"
-            element={user ? <PurchaseCancelPage /> : <Navigate to="/login" />}
-          />
-        </Routes>
+        <Suspense fallback={<LoadingSpinner />}>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route
+              path="/signup"
+              element={!user ? <SignUpPage /> : <Navigate to="/" />}
+            />
+            <Route
+              path="/login"
+              element={!user ? <LoginPage /> : <Navigate to="/" />}
+            />
+            <Route
+              path="/secret-dashboard"
+              element={
+                user?.role === "admin" ? (
+                  <AdminPage />
+                ) : (
+                  <Navigate to="/login" />
+                )
+              }
+            />
+            <Route path="/category/:category" element={<CategoryPage />} />
+            <Route
+              path="/cart"
+              element={user ? <CartPage /> : <Navigate to="/login" />}
+            />
+            <Route
+              path="/purchase-success"
+              element={
+                user ? <PurchaseSuccessPage /> : <Navigate to="/login" />
+              }
+            />
+            <Route
+              path="/purchase-cancel"
+              element={user ? <PurchaseCancelPage /> : <Navigate to="/login" />}
+            />
+          </Routes>
+        </Suspense>
       </div>
 
       <Toaster />
