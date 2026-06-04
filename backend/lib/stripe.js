@@ -1,5 +1,4 @@
 import Stripe from "stripe";
-import dotenv from "dotenv";
-dotenv.config();
+import { env } from "../config/env.js";
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+export const stripe = new Stripe(env.STRIPE_SECRET_KEY);

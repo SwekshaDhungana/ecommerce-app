@@ -12,9 +12,11 @@ import {
   errorHandler,
   notFoundHandler,
 } from "./middleware/error.middleware.js";
+import { securityHeaders } from "./middleware/security.middleware.js";
 
 const app = express();
 
+app.use(securityHeaders); //applies the protected to every backend response
 app.use(express.json({ limit: "10mb" }));
 app.use(cors({ origin: env.CLIENT_URL, credentials: true }));
 app.use(cookieParser());

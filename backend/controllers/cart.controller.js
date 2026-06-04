@@ -1,147 +1,110 @@
 import Product from "../models/Product.model.js";
+import { asyncHandler } from "../middleware/async.middleware.js";
 
-export const getCartProducts = async (req, res) => {
-  try {
-    const productIds = req.user.cartItems.map((item) => item.product);
+export const getCartProducts = asyncHandler(async (req, res) => {
+  const productIds = req.user.cartItems.map((item) => item.product);
 
-    const products = await Product.find({
-      _id: { $in: productIds },
-    }).lean();
+  const products = await Product.find({
+    _id: { $in: productIds },
+  }).lean();
 
-    const productMap = new Map(
-      products.map((product) => [product._id.toString(), product]),
-    );
+  const productMap = new Map(
+    products.map((product) => [product._id.toString(), product]),
+  );
 
-    //we use flatma because it will return nothing in [], but if it was map, it would return null, if it did not find product.
-    const cartItems = req.user.cartItems.flatMap((item) => {
-      const product = productMap.get(item.product.toString());
+  const cartItems = req.user.cartItems.flatMap((item) => {
+    const product = productMap.get(item.product.toString());
 
-      if (!product) {
-        return [];
-      }
+    if (!product) {
+      return [];
+    }
 
-      return [
-        {
-          ...product,
-          quantity: item.quantity,
-        },
-      ];
-    });
+    return [
+      {
+        ...product,
+        quantity: item.quantity,
+      },
+    ];
+  });
 
-    res.status(200).json(cartItems);
-  } catch (error) {
-    console.log("Error in getCartProducts controller", error.message);
-    res
-      .status(500)
-      .json({ message: "Internal Server Error", error: error.message });
+  res.status(200).json(cartItems);
+});
+
+export const addToCart = asyncHandler(async (req, res) => {
+  const { productId } = req.validatedBody;
+  const productExists = await Product.exists({ _id: productId });
+
+  if (!productExists) {
+    res.status(404);
+    throw new Error("Product not found");
   }
-};
 
-export const addToCart = async (req, res) => {
-  try {
-    const { productId } = req.validatedBody;
+  const user = req.user;
 
-    if (!productId) {
-      return res.status(400).json({ message: "Product ID is required" });
-    }
+  const existingItem = user.cartItems.find(
+    (item) => item.product.toString() === productId,
+  );
 
-    const productExists = await Product.exists({ _id: productId });
+  if (existingItem) {
+    existingItem.quantity += 1;
+  } else {
+    user.cartItems.push({
+      product: productId,
+      quantity: 1,
+    });
+  }
 
-    if (!productExists) {
-      return res.status(404).json({ message: "Product not found" });
-    }
+  await user.save();
 
-    const user = req.user;
+  res.status(200).json(user.cartItems);
+});
 
-    const existingItem = user.cartItems.find(
-      (item) => item.product.toString() === productId,
-    );
+export const removeAllFromCart = asyncHandler(async (req, res) => {
+  const { productId } = req.validatedBody;
+  const user = req.user;
 
-    if (existingItem) {
-      existingItem.quantity += 1;
-    } else {
-      user.cartItems.push({
-        product: productId,
-        quantity: 1,
-      });
-    }
-
+  if (!productId) {
+    user.cartItems = [];
     await user.save();
 
-    res.status(200).json(user.cartItems);
-  } catch (error) {
-    console.log("Error in addToCart controller", error.message);
-    res
-      .status(500)
-      .json({ message: "Internal Server Error", error: error.message });
+    return res.status(200).json(user.cartItems);
   }
-};
 
-export const removeAllFromCart = async (req, res) => {
-  try {
-    const { productId } = req.validatedBody;
-    const user = req.user;
+  user.cartItems = user.cartItems.filter(
+    (item) => item.product.toString() !== productId,
+  );
 
-    if (!productId) {
-      user.cartItems = [];
-      await user.save();
+  await user.save();
 
-      return res.status(200).json(user.cartItems);
-    }
+  res.status(200).json(user.cartItems);
+});
 
+export const updateQuantity = asyncHandler(async (req, res) => {
+  const { id: productId } = req.validatedParams;
+  const { quantity } = req.validatedBody;
+  const user = req.user;
+
+  const existingItem = user.cartItems.find(
+    (item) => item.product.toString() === productId,
+  );
+
+  if (!existingItem) {
+    res.status(404);
+    throw new Error("Product not found in cart");
+  }
+
+  if (quantity === 0) {
     user.cartItems = user.cartItems.filter(
       (item) => item.product.toString() !== productId,
     );
 
     await user.save();
 
-    res.status(200).json(user.cartItems);
-  } catch (error) {
-    console.log("Error in removeAllFromCart controller", error.message);
-    res
-      .status(500)
-      .json({ message: "Internal Server Error", error: error.message });
+    return res.status(200).json(user.cartItems);
   }
-};
 
-export const updateQuantity = async (req, res) => {
-  try {
-    const { id: productId } = req.validatedParams;
-    const { quantity } = req.validatedBody;
-    const user = req.user;
+  existingItem.quantity = quantity;
+  await user.save();
 
-    if (!Number.isInteger(quantity) || quantity < 0) {
-      return res.status(400).json({
-        message: "Quantity must be an integer greater than or equal to 0",
-      });
-    }
-
-    const existingItem = user.cartItems.find(
-      (item) => item.product.toString() === productId,
-    );
-
-    if (!existingItem) {
-      return res.status(404).json({ message: "Product not found in cart" });
-    }
-
-    if (quantity === 0) {
-      user.cartItems = user.cartItems.filter(
-        (item) => item.product.toString() !== productId,
-      );
-
-      await user.save();
-
-      return res.status(200).json(user.cartItems);
-    }
-
-    existingItem.quantity = quantity;
-    await user.save();
-
-    res.status(200).json(user.cartItems);
-  } catch (error) {
-    console.log("Error in updateQuantity controller", error.message);
-    res
-      .status(500)
-      .json({ message: "Internal Server Error", error: error.message });
-  }
-};
+  res.status(200).json(user.cartItems);
+});
