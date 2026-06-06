@@ -50,7 +50,10 @@ const CreateProductForm = () => {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setNewProduct({ ...newProduct, image: reader.result });
+        setNewProduct((prevProduct) => ({
+          ...prevProduct,
+          image: reader.result,
+        }));
       };
       reader.readAsDataURL(file); //base64
     }
