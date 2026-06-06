@@ -86,10 +86,6 @@ export const createCheckoutSession = asyncHandler(async (req, res) => {
     },
   });
 
-  if (totalAmount >= 20000) {
-    await createNewCoupon(req.user._id);
-  }
-
   res.status(200).json({
     id: session.id,
     url: session.url,
@@ -148,6 +144,10 @@ export const checkoutSuccess = asyncHandler(async (req, res) => {
     await User.findByIdAndUpdate(session.metadata.userId, {
       cartItems: [],
     });
+
+    if (order.totalAmount >= 200) {
+      await createNewCoupon(session.metadata.userId);
+    }
   }
 
   res.status(200).json({

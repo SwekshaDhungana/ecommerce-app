@@ -32,7 +32,7 @@ const App = () => {
     getCartItems();
   }, [getCartItems, user]);
 
-  if (checkingAuth) return <LoadingSpinner />;
+  if (checkingAuth) return <LoadingSpinner variant="fullScreen" />;
 
   return (
     <div className="min-h-screen bg-gray-900 text-white relative overflow-hidden">
@@ -44,7 +44,7 @@ const App = () => {
 
       <div className="relative z-50 pt-20">
         <Navbar />
-        <Suspense fallback={<LoadingSpinner />}>
+        <Suspense fallback={<LoadingSpinner variant="fullScreen" />}>
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route
