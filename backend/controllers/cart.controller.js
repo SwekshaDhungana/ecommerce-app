@@ -17,7 +17,7 @@ export const getCartProducts = asyncHandler(async (req, res) => {
   const productMap = new Map(
     products.map((product) => [product._id.toString(), product]),
   );
-
+  //flatMap was used to transform valid cart items and skip invalid ones in one step.
   const responseItems = cartItems.flatMap((item) => {
     const product = productMap.get(getProductId(item));
 

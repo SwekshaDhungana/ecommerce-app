@@ -1,6 +1,7 @@
 import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import path from "path";
 import { env } from "./config/env.js";
 import authRoutes from "./routes/auth.route.js";
 import productRoutes from "./routes/product.route.js";
@@ -15,6 +16,8 @@ import {
 import { securityHeaders } from "./middleware/security.middleware.js";
 
 const app = express();
+
+const __dirname = path.resolve();
 
 app.use(securityHeaders); //applies the protected to every backend response
 app.use(express.json({ limit: "10mb" }));
@@ -37,5 +40,13 @@ app.use("/api/analytics", analyticsRoutes);
 
 app.use(notFoundHandler); //middleware executes inorder, so when it finds the route which does not match any of the above, this runs
 app.use(errorHandler); //this is special middleware which has four parameters so the error gets passed to this
+
+if (env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "/frontend/dist")));
+
+  app.get("*", (req, res) => {
+    res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html"));
+  });
+}
 
 export default app;
