@@ -16,10 +16,9 @@ import {
 import { securityHeaders } from "./middleware/security.middleware.js";
 
 const app = express();
-
 const __dirname = path.resolve();
 
-app.use(securityHeaders); //applies the protected to every backend response
+app.use(securityHeaders);
 app.use(express.json({ limit: "10mb" }));
 app.use(cors({ origin: env.CLIENT_URL, credentials: true }));
 app.use(cookieParser());
@@ -38,15 +37,15 @@ app.use("/api/coupons", couponRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/analytics", analyticsRoutes);
 
-app.use(notFoundHandler); //middleware executes inorder, so when it finds the route which does not match any of the above, this runs
-app.use(errorHandler); //this is special middleware which has four parameters so the error gets passed to this
-
 if (env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "/frontend/dist")));
+  app.use(express.static(path.join(__dirname, "frontend", "dist")));
 
-  app.get("*", (req, res) => {
+  app.get(/^(?!\/api).*/, (req, res) => {
     res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html"));
   });
 }
+
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 export default app;
