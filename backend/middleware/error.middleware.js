@@ -7,6 +7,7 @@ export const notFoundHandler = (req, res) => {
 };
 
 export const errorHandler = (err, req, res, next) => {
+  //the default status code is 200 if no status is set
   const statusCode = res.statusCode >= 400 ? res.statusCode : 500;
 
   console.error("Unhandled error:", err);

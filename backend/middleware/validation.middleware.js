@@ -121,12 +121,14 @@ const updateCartQuantityBodySchema = z.object({
     .max(20, "Quantity cannot exceed 20"),
 });
 
+//formatValidationErrors converts the errror in cleaner format
 const formatValidationErrors = (error) =>
   error.issues.map((issue) => ({
     field: issue.path.join("."),
     message: issue.message,
   }));
 
+//(req,res,next)=>{} is the express middleware
 const validateBody = (schema) => (req, res, next) => {
   const result = schema.safeParse(req.body ?? {});
 
